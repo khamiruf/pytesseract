@@ -1,6 +1,6 @@
 # OCR for Transcribing Chinese Images to Text
 
-*configurations*: 
+### *Configurations*: 
 - run ```pip install -r requirements.txt``` before anything (only once)
 - from https://stackoverflow.com/a/53672281:
 ```
@@ -15,7 +15,7 @@
 pytesseract.pytesseract.tesseract_cmd = r'C:\Users\USER\AppData\Local\Tesseract-OCR\tesseract.exe'
 ```
 
-*running of script*:
+### *Running of script*:
 
 1. Download image to /images folder
 2. Run script by "python ocr.py -i <path to image>"

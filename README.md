@@ -15,6 +15,8 @@
 pytesseract.pytesseract.tesseract_cmd = r'C:\Users\USER\AppData\Local\Tesseract-OCR\tesseract.exe'
 ```
 
+*running of script*:
+
 1. Download image to /images folder
 2. Run script by "python ocr.py -i <path to image>"
 

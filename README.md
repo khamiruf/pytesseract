@@ -18,10 +18,10 @@ pytesseract.pytesseract.tesseract_cmd = r'C:\Users\USER\AppData\Local\Tesseract-
 ### Running of script:
 
 1. Download image to /images folder
-2. Run script by "python ocr.py -i \<path to image>"
+2. Run script by "python ocr.py"
 
 Example:
 ```
-python ocr.py -i "images/column_5.png"
+python ocr.py
 ```
 3. Output will be generated into `/output` folder

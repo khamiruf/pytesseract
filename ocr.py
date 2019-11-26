@@ -6,56 +6,58 @@ import argparse
 import cv2
 import os
 
+def load_image(img, preprocess = "thresh"):
+    # load the image and convert it to grayscale (binarize it) & write it to disk
+    image = cv2.imread(img)
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
-# construct argument parse and parse the arguments
-ap = argparse.ArgumentParser()
-ap.add_argument("-i", "--image", required=True,
-    help="path to input image to be OCR'd") # path to image we're sending to the OCR system
-ap.add_argument("-p", "--preprocess", type=str, default="thresh",
-    help="type of preprocessing to be done") # accepts two values: thresh (threshold) / blur
-args = vars(ap.parse_args())
+    # check to see if we should apply thresholding to preprocess the image
+    if preprocess == "thresh":
+        gray = cv2.threshold(gray, 0, 255,
+            cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
+    # make a check to see if median blurring should be done to remove noise
+    elif preprocess == "blur":
+        gray = cv2.medianBlur(gray, 3)
 
+    return gray
 
-# load the image and convert it to grayscale (binarize it) & write it to disk
-image = cv2.imread(args["image"])
-gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+def write_temp_file(gray):
+    # write the grayscale image to disk as a temp file so we can apply OCR to it
+    filename = "{}.png".format(os.getpid())
+    cv2.imwrite(filename, gray)
 
-# check to see if we should apply thresholding to preprocess the image
-if args["preprocess"] == "thresh":
-    gray = cv2.threshold(gray, 0, 255,
-        cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
-    
+    return filename
 
-# make a check to see if median blurring should be done to remove noise
-elif args["preprocess"] == "blur":
-    gray = cv2.medianBlur(gray, 3)
+def apply_ocr(filename):
+        
+    # load the image as a PIL/Pillow image, apply OCR, and then delete the temp file
+    pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+    try_config = r'-c preserve_interword_spaces=1x1 --psm 5 --oem 3'
+    custom_oem_psm_config = r'--oem 3 --psm 6'
+    text = pytesseract.image_to_string(Image.open(filename), lang="chi_sim", config=custom_oem_psm_config)
+    os.remove(filename)
 
-# write the grayscale image to disk as a temp file so we can apply OCR to it
-filename = "{}.png".format(os.getpid())
-cv2.imwrite(filename, gray)
-
-
-# load the image as a PIL/Pillow image, apply OCR, and then delete the temp file
-pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
-try_config = r'-c preserve_interword_spaces=1x1 --psm 5 --oem 3'
-custom_oem_psm_config = r'--oem 3 --psm 6'
-text = pytesseract.image_to_string(Image.open(filename), lang="chi_sim", config=custom_oem_psm_config)
-os.remove(filename)
-
-outfile_txt = "output/output_text.txt"
-
-with open(outfile_txt, "w+", encoding="utf-8-sig") as f:
-    f.writelines(text)
+    return text
 
 
-# tried for multiple columns to split into data format
+if __name__ == "__main__":
+    try:
+        # get number of files in images dir
+        num_of_files = len([name for name in os.listdir('./images')])
+        count = 0
 
-# with open(outfile_txt, "r", encoding="utf-8-sig") as f:
-#     lines = f.readlines()
+        for entry in os.scandir('./images'):
+            if count < num_of_files:
+                gray = load_image(entry.path)
+                filename = write_temp_file(gray)
+                output = apply_ocr(filename)
+                outfile_txt = "output/output_text_{}.txt".format(count+1)
 
-# # remove spaces
-# lines = [','.join(line.split()) for line in lines]
+                with open(outfile_txt, "w+", encoding="utf-8-sig") as f:
+                    f.writelines(output)
 
-# # finally, write lines in the file
-# with open('out_text.txt', 'w', encoding='utf-8-sig') as f:
-#     f.writelines(s + '\n' for s in lines)
+                print(count)
+                count += 1
+
+    except KeyboardInterrupt:
+        pass
